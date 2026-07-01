@@ -1,0 +1,108 @@
+# Domain 1: Author and maintain workflows (40%)
+# Topic: Work with events that trigger workflows - Configure workflows to run for webhook events
+
+name: 04 - Event Triggers - Webhook Events
+
+# Demonstrates various webhook event triggers
+on:
+  issues:
+    types:
+      - opened
+      - closed
+      - labeled
+  issue_comment:
+    types:
+      - created
+  release:
+    types:
+      - published
+      - created
+  deployment:
+  deployment_status:
+  check_run:
+    types:
+      - completed
+  check_suite:
+    types:
+      - completed
+  registry_package:
+    types:
+      - published
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  handle-issue-events:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Handle issue event
+        run: |
+          echo "Issue event detected!"
+          echo "Action: ${{ github.event.action }}"
+          echo "Issue number: ${{ github.event.issue.number }}"
+          echo "Issue title: ${{ github.event.issue.title }}"
+          echo "Issue state: ${{ github.event.issue.state }}"
+          
+      - name: Respond to new issue
+        if: github.event.action == 'opened'
+        run: |
+          echo "New issue opened: #${{ github.event.issue.number }}"
+          echo "Would normally add a comment or label here"
+
+  handle-release-events:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Handle release event
+        run: |
+          echo "Release event detected!"
+          echo "Action: ${{ github.event.action }}"
+          echo "Release tag: ${{ github.event.release.tag_name }}"
+          echo "Release name: ${{ github.event.release.name }}"
+          echo "Prerelease: ${{ github.event.release.prerelease }}"
+          
+      - name: Notify on release
+        if: github.event.action == 'published'
+        run: |
+          echo "📦 New release published: ${{ github.event.release.tag_name }}"
+          echo "Would send notifications to team"
+
+  handle-deployment-events:
+    if: github.event_name == 'deployment' || github.event_name == 'deployment_status'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Handle deployment event
+        run: |
+          echo "Deployment event detected!"
+          echo "Event: ${{ github.event_name }}"
+          
+      - name: Log deployment status
+        if: github.event_name == 'deployment_status'
+        run: |
+          echo "Deployment status: ${{ github.event.deployment_status.state }}"
+          echo "Environment: ${{ github.event.deployment.environment }}"
+
+  handle-check-events:
+    if: github.event_name == 'check_run' || github.event_name == 'check_suite'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Handle check event
+        run: |
+          echo "Check event detected!"
+          echo "Event: ${{ github.event_name }}"
+          echo "Conclusion: ${{ github.event.check_run.conclusion || github.event.check_suite.conclusion }}"
+
+  handle-workflow-run:
+    if: github.event_name == 'workflow_run'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Handle workflow run completion
+        run: |
+          echo "Another workflow completed!"
+          echo "Workflow: ${{ github.event.workflow_run.name }}"
+          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Status: ${{ github.event.workflow_run.status }}"

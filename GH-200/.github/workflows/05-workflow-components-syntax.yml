@@ -1,0 +1,199 @@
+# Domain 1: Author and maintain workflows (40%)
+# Topic: Use the components of a workflow - Identify the correct syntax for workflow jobs
+
+name: 05 - Workflow Components - Job Syntax and Structure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Workflow-level environment variables
+env:
+  WORKFLOW_VAR: "workflow-level"
+
+jobs:
+  # Job 1: Demonstrates basic job structure
+  basic-job:
+    name: Basic Job Structure
+    runs-on: ubuntu-latest
+    # Job-level environment variables
+    env:
+      JOB_VAR: "job-level"
+    # Timeout for the entire job (default is 360 minutes)
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Display environment info
+        run: |
+          echo "Workflow variable: $WORKFLOW_VAR"
+          echo "Job variable: $JOB_VAR"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner architecture: ${{ runner.arch }}"
+        
+      - name: Step with environment variable
+        env:
+          STEP_VAR: "step-level"
+        run: |
+          echo "Step variable: $STEP_VAR"
+          echo "All variables are accessible in their scope"
+
+  # Job 2: Demonstrates shell commands and multi-line scripts
+  shell-commands:
+    name: Shell Commands and Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Single line command
+        run: echo "Simple command"
+        
+      - name: Multi-line bash script
+        shell: bash
+        run: |
+          echo "Multi-line script"
+          for i in {1..3}; do
+            echo "Iteration $i"
+          done
+          
+      - name: PowerShell command (cross-platform)
+        shell: pwsh
+        run: |
+          Write-Host "Running PowerShell"
+          Get-Date
+          
+      - name: Python script
+        shell: python
+        run: |
+          import sys
+          print(f"Python version: {sys.version}")
+          print("Python script in workflow!")
+
+  # Job 3: Demonstrates job outputs
+  produce-output:
+    name: Job with Outputs
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.version.outputs.version }}
+      build-time: ${{ steps.timestamp.outputs.time }}
+    steps:
+      - name: Generate version
+        id: version
+        run: |
+          VERSION="1.2.${{ github.run_number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Generated version: $VERSION"
+          
+      - name: Generate timestamp
+        id: timestamp
+        run: |
+          TIME=$(date +%Y%m%d-%H%M%S)
+          echo "time=$TIME" >> $GITHUB_OUTPUT
+          echo "Timestamp: $TIME"
+
+  # Job 4: Demonstrates strategy matrix
+  matrix-job:
+    name: Matrix Strategy (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Continue running other jobs even if one fails
+      fail-fast: false
+      # Maximum number of jobs to run in parallel
+      max-parallel: 3
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20]
+        # Exclude specific combinations
+        exclude:
+          - os: macos-latest
+            node-version: 18
+        # Include additional combinations
+        include:
+          - os: ubuntu-latest
+            node-version: 20
+            is-primary: true
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          
+      - name: Display matrix values
+        run: |
+          echo "OS: ${{ matrix.os }}"
+          echo "Node version: ${{ matrix.node-version }}"
+          echo "Is primary: ${{ matrix.is-primary }}"
+          node --version
+
+  # Job 5: Job with services (containers)
+  job-with-services:
+    name: Job with Service Containers
+    runs-on: ubuntu-latest
+    services:
+      # PostgreSQL service container
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      # Redis service container
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+          
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Test database connection
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+        run: |
+          echo "Testing PostgreSQL connection..."
+          # Install PostgreSQL client
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          # Test connection
+          PGPASSWORD=postgres psql -h localhost -U postgres -d testdb -c 'SELECT version();'
+          
+      - name: Test Redis connection
+        run: |
+          echo "Testing Redis connection..."
+          # Install Redis client
+          sudo apt-get install -y redis-tools
+          # Test connection
+          redis-cli -h localhost ping
+
+  # Job 6: Job running in a container
+  container-job:
+    name: Job Running in Container
+    runs-on: ubuntu-latest
+    container:
+      image: node:20
+      env:
+        NODE_ENV: test
+      options: --cpus 1
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run commands in container
+        run: |
+          echo "Running inside container"
+          node --version
+          npm --version

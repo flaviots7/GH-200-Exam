@@ -1,0 +1,256 @@
+# Domain 1: Author and maintain workflows (40%)
+# Topic: Deploy a release to a cloud provider using a GitHub Actions workflow
+
+name: 14 - Cloud Deployment
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+jobs:
+  deploy-to-azure:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+      url: https://${{ steps.deploy.outputs.app-url }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Azure Login (example)
+        run: |
+          echo "=== Azure Deployment Example ==="
+          echo "In a real scenario, you would:"
+          echo "1. Login to Azure using credentials stored in secrets"
+          echo ""
+          echo "Example with Azure Login action:"
+          echo "  uses: azure/login@v1"
+          echo "  with:"
+          echo "    creds: \${{ secrets.AZURE_CREDENTIALS }}"
+          
+      - name: Deploy to Azure Web App
+        id: deploy
+        run: |
+          echo "Deploying application to Azure..."
+          echo "Resource Group: \${{ secrets.AZURE_RESOURCE_GROUP }}"
+          echo "App Name: \${{ secrets.AZURE_APP_NAME }}"
+          echo ""
+          echo "Example deployment command:"
+          echo "  az webapp deployment source config-zip \\"
+          echo "    --resource-group \$RESOURCE_GROUP \\"
+          echo "    --name \$APP_NAME \\"
+          echo "    --src app.zip"
+          echo ""
+          echo "app-url=myapp.azurewebsites.net" >> $GITHUB_OUTPUT
+
+  deploy-to-aws:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        run: |
+          echo "=== AWS Deployment Example ==="
+          echo "Configure AWS credentials using:"
+          echo "  uses: aws-actions/configure-aws-credentials@v4"
+          echo "  with:"
+          echo "    aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}"
+          echo "    aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          echo "    aws-region: us-east-1"
+          
+      - name: Deploy to AWS Elastic Beanstalk
+        run: |
+          echo "Deploying to AWS Elastic Beanstalk..."
+          echo ""
+          echo "Example commands:"
+          echo "  # Create application package"
+          echo "  zip -r deploy.zip ."
+          echo ""
+          echo "  # Deploy to Elastic Beanstalk"
+          echo "  aws elasticbeanstalk create-application-version \\"
+          echo "    --application-name MyApp \\"
+          echo "    --version-label v\${{ github.run_number }} \\"
+          echo "    --source-bundle S3Bucket=mybucket,S3Key=deploy.zip"
+          echo ""
+          echo "  # Update environment"
+          echo "  aws elasticbeanstalk update-environment \\"
+          echo "    --environment-name MyApp-env \\"
+          echo "    --version-label v\${{ github.run_number }}"
+          
+      - name: Deploy to AWS Lambda
+        run: |
+          echo "Deploying to AWS Lambda..."
+          echo ""
+          echo "Example commands:"
+          echo "  # Package function"
+          echo "  zip function.zip index.js"
+          echo ""
+          echo "  # Update function code"
+          echo "  aws lambda update-function-code \\"
+          echo "    --function-name MyFunction \\"
+          echo "    --zip-file fileb://function.zip"
+
+  deploy-to-gcp:
+    name: Deploy to Google Cloud Platform
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to Google Cloud
+        run: |
+          echo "=== GCP Deployment Example ==="
+          echo "Authenticate using:"
+          echo "  uses: google-github-actions/auth@v2"
+          echo "  with:"
+          echo "    credentials_json: \${{ secrets.GCP_CREDENTIALS }}"
+          
+      - name: Deploy to Google App Engine
+        run: |
+          echo "Deploying to Google App Engine..."
+          echo ""
+          echo "Example commands:"
+          echo "  # Create app.yaml"
+          echo "  cat > app.yaml <<EOF"
+          echo "  runtime: nodejs20"
+          echo "  EOF"
+          echo ""
+          echo "  # Deploy"
+          echo "  gcloud app deploy --quiet"
+          
+      - name: Deploy to Cloud Run
+        run: |
+          echo "Deploying to Cloud Run..."
+          echo ""
+          echo "Example commands:"
+          echo "  # Build and push container"
+          echo "  gcloud builds submit --tag gcr.io/\$PROJECT_ID/myapp"
+          echo ""
+          echo "  # Deploy to Cloud Run"
+          echo "  gcloud run deploy myapp \\"
+          echo "    --image gcr.io/\$PROJECT_ID/myapp \\"
+          echo "    --platform managed \\"
+          echo "    --region us-central1"
+
+  deploy-to-kubernetes:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup kubectl
+        run: |
+          echo "Setting up kubectl..."
+          echo "  uses: azure/setup-kubectl@v3"
+          
+      - name: Deploy to Kubernetes cluster
+        run: |
+          echo "=== Kubernetes Deployment Example ==="
+          echo ""
+          echo "# Create deployment manifest"
+          cat <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: myapp
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: myapp
+            template:
+              metadata:
+                labels:
+                  app: myapp
+              spec:
+                containers:
+                - name: myapp
+                  image: ghcr.io/${{ github.repository }}:latest
+                  ports:
+                  - containerPort: 3000
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: myapp-service
+          spec:
+            selector:
+              app: myapp
+            ports:
+            - port: 80
+              targetPort: 3000
+            type: LoadBalancer
+          EOF
+          echo ""
+          echo "# Apply deployment"
+          echo "kubectl apply -f deployment.yml"
+          echo ""
+          echo "# Check rollout status"
+          echo "kubectl rollout status deployment/myapp"
+
+  deploy-to-heroku:
+    name: Deploy to Heroku
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Heroku
+        run: |
+          echo "=== Heroku Deployment Example ==="
+          echo ""
+          echo "Using Heroku Deploy action:"
+          echo "  uses: akhileshns/heroku-deploy@v3.13.15"
+          echo "  with:"
+          echo "    heroku_api_key: \${{ secrets.HEROKU_API_KEY }}"
+          echo "    heroku_app_name: my-app-name"
+          echo "    heroku_email: user@example.com"
+
+  post-deployment-tests:
+    name: Post-Deployment Tests
+    needs: [deploy-to-azure]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Health check
+        run: |
+          echo "Running post-deployment health checks..."
+          echo "✓ Application is responding"
+          echo "✓ Database connections OK"
+          echo "✓ All services healthy"
+          
+      - name: Smoke tests
+        run: |
+          echo "Running smoke tests..."
+          echo "✓ Homepage loads"
+          echo "✓ API endpoints responsive"
+          echo "✓ Authentication working"
+
+  rollback-deployment:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    # Only run if deployment failed
+    if: failure()
+    steps:
+      - name: Rollback deployment
+        run: |
+          echo "⚠️ Deployment failed - initiating rollback..."
+          echo "Reverting to previous version..."
+          echo "✓ Rollback completed"

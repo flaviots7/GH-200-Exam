@@ -1,0 +1,224 @@
+# Domain 1: Author and maintain workflows (40%)
+# Topic: Demonstrate how to publish a component as a GitHub release using GitHub Actions
+
+name: 13 - Create GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        type: boolean
+        default: false
+
+jobs:
+  build-artifacts:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+          
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Build application
+        run: |
+          echo "Building application ${{ steps.version.outputs.version }}..."
+          
+          # Create dist directory
+          mkdir -p dist
+          
+          # Create sample application files
+          cat > dist/app.js <<EOF
+          console.log('Application version: ${{ steps.version.outputs.version }}');
+          console.log('Built on: $(date)');
+          EOF
+          
+          cat > dist/README.txt <<EOF
+          GH-200 Exam Sample Application
+          Version: ${{ steps.version.outputs.version }}
+          Built: $(date)
+          Commit: ${{ github.sha }}
+          EOF
+          
+      - name: Create release archives
+        run: |
+          # Create zip archive
+          cd dist
+          zip -r ../app-${{ steps.version.outputs.version }}-linux.zip .
+          cd ..
+          
+          # Create tar.gz archive
+          tar -czf app-${{ steps.version.outputs.version }}-linux.tar.gz -C dist .
+          
+          # Create checksums
+          sha256sum app-${{ steps.version.outputs.version }}-*.{zip,tar.gz} > checksums.txt
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            app-*.zip
+            app-*.tar.gz
+            checksums.txt
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to create releases
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          VERSION="${{ needs.build-artifacts.outputs.version }}"
+          
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags ${VERSION}^ 2>/dev/null || echo "")
+          
+          # Generate changelog
+          cat > release-notes.md <<EOF
+          # Release $VERSION
+          
+          ## 🚀 What's New
+          
+          This release includes the following changes:
+          
+          EOF
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## 📝 Changelog" >> release-notes.md
+            echo "" >> release-notes.md
+            git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" >> release-notes.md
+          fi
+          
+          cat >> release-notes.md <<EOF
+          
+          
+          ## 📦 Assets
+          
+          - \`app-$VERSION-linux.zip\` - Linux build (zip)
+          - \`app-$VERSION-linux.tar.gz\` - Linux build (tar.gz)
+          - \`checksums.txt\` - SHA256 checksums
+          
+          ## 🔍 Checksums
+          
+          \`\`\`
+          $(cat checksums.txt)
+          \`\`\`
+          
+          ## 📋 Installation
+          
+          Download the appropriate archive for your platform and extract it:
+          
+          \`\`\`bash
+          # For zip
+          unzip app-$VERSION-linux.zip
+          
+          # For tar.gz
+          tar -xzf app-$VERSION-linux.tar.gz
+          \`\`\`
+          
+          ---
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...$VERSION
+          EOF
+          
+          cat release-notes.md
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.build-artifacts.outputs.version }}
+          name: Release ${{ needs.build-artifacts.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ inputs.prerelease || false }}
+          files: |
+            app-*.zip
+            app-*.tar.gz
+            checksums.txt
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-release-alternative:
+    name: Create Release (GitHub CLI)
+    needs: build-artifacts
+    runs-on: ubuntu-latest
+    # Only run one of the release jobs
+    if: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          
+      - name: Create release using GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.build-artifacts.outputs.version }}"
+          
+          # Create release with GitHub CLI
+          gh release create $VERSION \
+            --title "Release $VERSION" \
+            --notes "Release created using GitHub CLI" \
+            app-*.zip \
+            app-*.tar.gz \
+            checksums.txt
+
+  notify-release:
+    name: Notify Release
+    needs: [build-artifacts, create-release]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Release notification
+        run: |
+          echo "✅ Release ${{ needs.build-artifacts.outputs.version }} created successfully!"
+          echo "🔗 View release: https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-artifacts.outputs.version }}"
+          echo ""
+          echo "Release includes:"
+          echo "- Application archives (zip, tar.gz)"
+          echo "- Checksums file"
+          echo "- Auto-generated release notes"

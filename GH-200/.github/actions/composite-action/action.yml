@@ -1,0 +1,164 @@
+name: 'Composite Action'
+description: 'A sample composite action that combines multiple steps for GH-200 exam'
+author: 'GH-200 Student'
+
+# Define inputs
+inputs:
+  language:
+    description: 'Programming language to setup'
+    required: true
+    default: 'node'
+  version:
+    description: 'Version of the language'
+    required: false
+    default: '20'
+  install-dependencies:
+    description: 'Whether to install dependencies'
+    required: false
+    default: 'true'
+  run-tests:
+    description: 'Whether to run tests'
+    required: false
+    default: 'false'
+
+# Define outputs
+outputs:
+  setup-time:
+    description: 'Time taken to setup environment'
+    value: ${{ steps.record-time.outputs.time }}
+  status:
+    description: 'Status of the setup'
+    value: ${{ steps.finalize.outputs.status }}
+
+# Composite action with multiple steps
+runs:
+  using: 'composite'
+  steps:
+    - name: Record start time
+      id: record-time
+      shell: bash
+      run: |
+        START_TIME=$(date +%s)
+        echo "start=$START_TIME" >> $GITHUB_OUTPUT
+        echo "🕐 Setup started at $(date)"
+        
+    - name: Setup language environment
+      shell: bash
+      run: |
+        echo "=== Setting up ${{ inputs.language }} ${{ inputs.version }} ==="
+        
+    - name: Setup Node.js
+      if: inputs.language == 'node'
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.version }}
+        
+    - name: Setup Python
+      if: inputs.language == 'python'
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.version }}
+        
+    - name: Setup Java
+      if: inputs.language == 'java'
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.version }}
+        distribution: 'temurin'
+        
+    - name: Display language version
+      shell: bash
+      run: |
+        case "${{ inputs.language }}" in
+          node)
+            node --version
+            npm --version
+            ;;
+          python)
+            python --version
+            pip --version
+            ;;
+          java)
+            java --version
+            ;;
+          *)
+            echo "Language: ${{ inputs.language }}"
+            ;;
+        esac
+        
+    - name: Install dependencies
+      if: inputs.install-dependencies == 'true'
+      shell: bash
+      run: |
+        echo "📦 Installing dependencies..."
+        
+        case "${{ inputs.language }}" in
+          node)
+            if [ -f "package.json" ]; then
+              npm install
+            else
+              echo "No package.json found, skipping"
+            fi
+            ;;
+          python)
+            if [ -f "requirements.txt" ]; then
+              pip install -r requirements.txt
+            else
+              echo "No requirements.txt found, skipping"
+            fi
+            ;;
+          java)
+            if [ -f "pom.xml" ]; then
+              mvn install -DskipTests
+            else
+              echo "No pom.xml found, skipping"
+            fi
+            ;;
+        esac
+        
+    - name: Run tests
+      if: inputs.run-tests == 'true'
+      shell: bash
+      run: |
+        echo "🧪 Running tests..."
+        
+        case "${{ inputs.language }}" in
+          node)
+            npm test || echo "No tests defined"
+            ;;
+          python)
+            pytest || echo "pytest not available"
+            ;;
+          java)
+            mvn test || echo "No tests available"
+            ;;
+        esac
+        
+    - name: Finalize setup
+      id: finalize
+      shell: bash
+      run: |
+        END_TIME=$(date +%s)
+        START_TIME=${{ steps.record-time.outputs.start }}
+        DURATION=$((END_TIME - START_TIME))
+        
+        echo "time=${DURATION}s" >> $GITHUB_OUTPUT
+        echo "status=completed" >> $GITHUB_OUTPUT
+        
+        echo "✅ Setup completed in ${DURATION} seconds"
+        
+    - name: Summary
+      shell: bash
+      run: |
+        echo "=== Setup Summary ==="
+        echo "Language: ${{ inputs.language }}"
+        echo "Version: ${{ inputs.version }}"
+        echo "Dependencies installed: ${{ inputs.install-dependencies }}"
+        echo "Tests run: ${{ inputs.run-tests }}"
+        echo "Duration: ${{ steps.finalize.outputs.time }}"
+        echo "Status: ${{ steps.finalize.outputs.status }}"
+
+# Branding
+branding:
+  icon: 'package'
+  color: 'purple'

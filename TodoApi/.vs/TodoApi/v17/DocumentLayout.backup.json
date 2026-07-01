@@ -1,0 +1,103 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Estudo\\TodoApi\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|c:\\estudo\\todoapi\\todoapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|solutionrelative:todoapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|c:\\estudo\\todoapi\\todoapi\\tododb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|solutionrelative:todoapi\\tododb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|c:\\estudo\\todoapi\\todoapi\\todoapi.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}",
+      "RelativeMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|solutionrelative:todoapi\\todoapi.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|c:\\estudo\\todoapi\\todoapi\\todo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F63B1477-5646-4614-94FF-F064C91F3082}|TodoApi\\TodoApi.csproj|solutionrelative:todoapi\\todo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 1,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedHeight": 218,
+          "SelectedChildIndex": 4,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "TodoApi.http",
+              "DocumentMoniker": "C:\\Estudo\\TodoApi\\TodoApi\\TodoApi.http",
+              "RelativeDocumentMoniker": "TodoApi\\TodoApi.http",
+              "ToolTip": "C:\\Estudo\\TodoApi\\TodoApi\\TodoApi.http",
+              "RelativeToolTip": "TodoApi\\TodoApi.http",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003502|",
+              "WhenOpened": "2025-11-06T16:20:20.179Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TodoDb.cs",
+              "DocumentMoniker": "C:\\Estudo\\TodoApi\\TodoApi\\TodoDb.cs",
+              "RelativeDocumentMoniker": "TodoApi\\TodoDb.cs",
+              "ToolTip": "C:\\Estudo\\TodoApi\\TodoApi\\TodoDb.cs",
+              "RelativeToolTip": "TodoApi\\TodoDb.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T15:37:07.103Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Todo.cs",
+              "DocumentMoniker": "C:\\Estudo\\TodoApi\\TodoApi\\Todo.cs",
+              "RelativeDocumentMoniker": "TodoApi\\Todo.cs",
+              "ToolTip": "C:\\Estudo\\TodoApi\\TodoApi\\Todo.cs",
+              "RelativeToolTip": "TodoApi\\Todo.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T15:36:20.406Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Estudo\\TodoApi\\TodoApi\\Program.cs",
+              "RelativeDocumentMoniker": "TodoApi\\Program.cs",
+              "ToolTip": "C:\\Estudo\\TodoApi\\TodoApi\\Program.cs",
+              "RelativeToolTip": "TodoApi\\Program.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAAABsAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T15:33:18.208Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedHeight": 182,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

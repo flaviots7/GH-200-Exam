@@ -1,0 +1,22 @@
+{
+  "name": "gh200-exam-project",
+  "version": "1.0.0",
+  "description": "GitHub Actions GH-200 certification exam preparation project",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Running tests...\" && node src/test.js",
+    "lint": "echo \"Running linter...\"",
+    "build": "echo \"Building project...\" && mkdir -p dist && cp src/*.js dist/"
+  },
+  "keywords": [
+    "github-actions",
+    "certification",
+    "gh-200",
+    "ci-cd"
+  ],
+  "author": "GH-200 Student",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
