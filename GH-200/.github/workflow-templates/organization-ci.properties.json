@@ -1,7 +1,0 @@
-{
-  "name": "Organization CI Workflow",
-  "description": "Standard CI workflow template for the organization - includes building, testing, and security scanning",
-  "iconName": "checklist",
-  "categories": ["Continuous Integration"],
-  "filePatterns": ["package.json"]
-}
