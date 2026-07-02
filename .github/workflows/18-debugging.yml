@@ -1,0 +1,260 @@
+# Domain 2: Consume workflows (20%)
+# Topic: Enable step debug logging and diagnose failed workflow runs
+
+name: 18 - Debugging and Troubleshooting
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      enable-debug:
+        description: 'Enable debug logging'
+        type: boolean
+        default: false
+
+jobs:
+  debug-logging:
+    name: Debug Logging Examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Using debug logging
+        run: |
+          echo "=== Debug Logging ==="
+          echo ""
+          echo "Enable debug logging by setting secrets:"
+          echo "1. ACTIONS_STEP_DEBUG=true (for step debug logs)"
+          echo "2. ACTIONS_RUNNER_DEBUG=true (for runner diagnostic logs)"
+          echo ""
+          echo "Set these in:"
+          echo "- Repository Settings > Secrets and variables > Actions"
+          echo "- Or as repository/organization secrets"
+          
+      - name: Debug output example
+        run: |
+          echo "::debug::This is a debug message"
+          echo "::notice::This is a notice message"
+          echo "::warning::This is a warning message"
+          echo "::error::This is an error message"
+          
+      - name: Debug with file and line
+        run: |
+          echo "::debug file=app.js,line=10,col=5::Debug message with location"
+          echo "::warning file=test.js,line=25::Warning at specific location"
+          echo "::error file=script.js,line=100,col=15::Error with location"
+          
+      - name: Group log output
+        run: |
+          echo "::group::Installation Steps"
+          echo "Installing dependencies..."
+          echo "- Package 1"
+          echo "- Package 2"
+          echo "- Package 3"
+          echo "::endgroup::"
+          
+          echo "::group::Build Steps"
+          echo "Building application..."
+          echo "- Compiling source"
+          echo "- Running tests"
+          echo "- Creating artifacts"
+          echo "::endgroup::"
+          
+      - name: Mask sensitive values
+        run: |
+          SENSITIVE_VALUE="my-secret-password"
+          echo "::add-mask::$SENSITIVE_VALUE"
+          echo "The password is: $SENSITIVE_VALUE"
+          echo "(Value should be masked in logs)"
+
+  error-handling:
+    name: Error Handling Patterns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Step that might fail (continue on error)
+        id: risky-step
+        continue-on-error: true
+        run: |
+          echo "Running risky operation..."
+          exit 1
+          
+      - name: Check previous step result
+        run: |
+          echo "Previous step outcome: ${{ steps.risky-step.outcome }}"
+          echo "Previous step conclusion: ${{ steps.risky-step.conclusion }}"
+          if [ "${{ steps.risky-step.outcome }}" == "failure" ]; then
+            echo "Previous step failed, but we're continuing"
+          fi
+          
+      - name: Conditional execution based on failure
+        if: steps.risky-step.outcome == 'failure'
+        run: |
+          echo "Handling the failure from previous step"
+          echo "Implementing fallback logic..."
+          
+      - name: Always run cleanup
+        if: always()
+        run: |
+          echo "This runs regardless of previous step results"
+          echo "Use for cleanup operations"
+
+  timeout-examples:
+    name: Timeout Configurations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Step with timeout
+        timeout-minutes: 5
+        run: |
+          echo "This step has a 5-minute timeout"
+          echo "Job has a 10-minute timeout"
+          echo "Default timeout is 360 minutes (6 hours)"
+          
+      - name: Simulate long-running task
+        run: |
+          echo "Simulating work..."
+          sleep 2
+          echo "Work completed"
+
+  diagnostic-info:
+    name: Collect Diagnostic Information
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Display runner information
+        run: |
+          echo "=== Runner Information ==="
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner architecture: ${{ runner.arch }}"
+          echo "Runner name: ${{ runner.name }}"
+          echo "Runner temp: ${{ runner.temp }}"
+          echo "Runner tool cache: ${{ runner.tool_cache }}"
+          
+      - name: Display GitHub context
+        run: |
+          echo "=== GitHub Context ==="
+          echo "Event: ${{ github.event_name }}"
+          echo "Action: ${{ github.action }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Run number: ${{ github.run_number }}"
+          echo "Job: ${{ github.job }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          
+      - name: Display environment variables
+        run: |
+          echo "=== Environment Variables ==="
+          env | sort | grep -E '^(GITHUB_|RUNNER_)'
+          
+      - name: System information
+        run: |
+          echo "=== System Information ==="
+          uname -a
+          echo ""
+          echo "CPU Info:"
+          lscpu | grep -E '(Model name|CPU\(s\)|Thread|Core)'
+          echo ""
+          echo "Memory Info:"
+          free -h
+          echo ""
+          echo "Disk Info:"
+          df -h /
+          
+      - name: Installed tools
+        run: |
+          echo "=== Installed Tools ==="
+          echo "Node: $(node --version 2>/dev/null || echo 'not installed')"
+          echo "NPM: $(npm --version 2>/dev/null || echo 'not installed')"
+          echo "Python: $(python --version 2>/dev/null || echo 'not installed')"
+          echo "Docker: $(docker --version 2>/dev/null || echo 'not installed')"
+          echo "Git: $(git --version)"
+
+  troubleshooting-guide:
+    name: Troubleshooting Guide
+    runs-on: ubuntu-latest
+    steps:
+      - name: Common issues and solutions
+        run: |
+          cat <<'EOF'
+          === Troubleshooting GitHub Actions ===
+          
+          1. Access workflow logs:
+             - GitHub UI: Actions tab > Select run > Select job
+             - Download logs: Click "Download log archive" button
+             - API: GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs
+          
+          2. Enable debug logging:
+             - Set repository secret: ACTIONS_STEP_DEBUG=true
+             - Set repository secret: ACTIONS_RUNNER_DEBUG=true
+             - Re-run the workflow
+          
+          3. Common failure reasons:
+             - Syntax errors in YAML
+             - Missing permissions
+             - Invalid secret references
+             - Timeout exceeded
+             - Resource limits
+             - Network issues
+          
+          4. Debugging strategies:
+             - Add debug output with echo statements
+             - Use ::debug::, ::notice::, ::warning:: commands
+             - Check exit codes: echo $?
+             - Verify environment variables
+             - Test actions locally with act
+          
+          5. Understanding workflow logs:
+             - ✓ Green checkmark: Step succeeded
+             - ✗ Red X: Step failed
+             - ⊘ Skipped: Conditional not met
+             - ⚠ Yellow warning: Completed with warnings
+          
+          6. Re-running workflows:
+             - Re-run all jobs
+             - Re-run failed jobs only
+             - Enable debug logging on re-run
+          
+          7. Accessing logs via API:
+             GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs
+             GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs
+          
+          8. Workflow run history:
+             - View past runs in Actions tab
+             - Filter by branch, event, status
+             - Search within runs
+             - Export logs for analysis
+          EOF
+
+  matrix-debugging:
+    name: Debug Matrix Job (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [18, 20]
+    steps:
+      - name: Display matrix values
+        run: |
+          echo "OS: ${{ matrix.os }}"
+          echo "Node version: ${{ matrix.node }}"
+          echo "Job index: ${{ strategy.job-index }}"
+          echo "Job total: ${{ strategy.job-total }}"
+          
+      - name: OS-specific debugging
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            echo "Running on Windows"
+            systeminfo | findstr /C:"OS"
+          else
+            echo "Running on Unix-like system"
+            uname -a
+          fi

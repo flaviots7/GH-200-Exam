@@ -1,0 +1,133 @@
+# Domain 1: Author and maintain workflows (40%)
+# Topic: Use the components of a workflow - Use conditional keywords for steps
+
+name: 06 - Workflow Components - Conditionals
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run-tests:
+        type: boolean
+        default: true
+      environment:
+        type: choice
+        options: [dev, staging, prod]
+
+jobs:
+  conditional-steps:
+    name: Conditional Steps Examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Basic if condition
+      - name: Run only on main branch
+        if: github.ref == 'refs/heads/main'
+        run: echo "This is the main branch"
+        
+      - name: Run only on pull requests
+        if: github.event_name == 'pull_request'
+        run: echo "This is a pull request"
+        
+      # Check multiple conditions with logical operators
+      - name: Run on main branch AND push event
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: echo "Pushed to main branch"
+        
+      - name: Run on develop OR main branch
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+        run: echo "On develop or main branch"
+        
+      # Using functions
+      - name: Run if commit message contains [skip ci]
+        if: contains(github.event.head_commit.message, '[skip ci]')
+        run: echo "Commit message contains [skip ci]"
+        
+      - name: Run if NOT contains [skip ci]
+        if: "!contains(github.event.head_commit.message, '[skip ci]')"
+        run: echo "Normal CI run"
+        
+      # Check based on previous step
+      - name: Step that might fail
+        id: risky-step
+        continue-on-error: true
+        run: exit 1
+        
+      - name: Run if previous step succeeded
+        if: steps.risky-step.outcome == 'success'
+        run: echo "Previous step succeeded"
+        
+      - name: Run if previous step failed
+        if: steps.risky-step.outcome == 'failure'
+        run: echo "Previous step failed, but we continue"
+        
+      - name: Always run (even if previous steps failed)
+        if: always()
+        run: echo "This always runs"
+        
+      - name: Run only if job is successful so far
+        if: success()
+        run: echo "All previous steps succeeded"
+        
+      - name: Run only if job has failures
+        if: failure()
+        run: echo "At least one step failed"
+        
+      # Check runner OS
+      - name: Run only on Linux
+        if: runner.os == 'Linux'
+        run: echo "Running on Linux"
+        
+      # Check input parameters (for workflow_dispatch)
+      - name: Run if tests enabled
+        if: github.event.inputs.run-tests == 'true'
+        run: echo "Tests are enabled"
+        
+      # Using startsWith and endsWith
+      - name: Check if branch starts with 'feature/'
+        if: startsWith(github.ref, 'refs/heads/feature/')
+        run: echo "This is a feature branch"
+        
+      - name: Check if file is modified
+        id: check-files
+        run: |
+          if git diff --name-only HEAD^..HEAD | grep -q "src/"; then
+            echo "modified=true" >> $GITHUB_OUTPUT
+          else
+            echo "modified=false" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Run if source files modified
+        if: steps.check-files.outputs.modified == 'true'
+        run: echo "Source files were modified"
+
+  conditional-job:
+    name: Conditional Job
+    # This entire job only runs on main branch
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This job only runs on main"
+
+  matrix-with-conditionals:
+    name: Matrix with Conditionals
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+    steps:
+      - name: Deploy to environment
+        run: echo "Deploying to ${{ matrix.environment }}"
+        
+      - name: Additional checks for production
+        if: matrix.environment == 'prod'
+        run: |
+          echo "Extra validation for production"
+          echo "Checking approvals..."
+          
+      - name: Quick deploy for dev
+        if: matrix.environment == 'dev'
+        run: echo "Fast deployment to dev environment"
