@@ -1,0 +1,240 @@
+# Domain 2: Consume workflows (20%)
+# Topic: Configure caching of workflow dependencies
+
+name: 15 - Workflow Caching
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cache-npm-dependencies:
+    name: Cache NPM Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Built-in caching support
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          # Create package.json if it doesn't exist
+          if [ ! -f package.json ]; then
+            npm init -y
+            npm install express axios lodash
+          else
+            npm install
+          fi
+          
+      - name: Display cache info
+        run: |
+          echo "NPM cache is automatically managed by setup-node action"
+          echo "Cache key is based on package-lock.json hash"
+          
+  cache-manual-npm:
+    name: Manual NPM Caching
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Cache node modules
+        id: cache-npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+            
+      - name: Check cache status
+        run: |
+          if [ "${{ steps.cache-npm.outputs.cache-hit }}" == "true" ]; then
+            echo "✓ Cache hit! Dependencies restored from cache"
+          else
+            echo "✗ Cache miss. Dependencies will be downloaded"
+          fi
+          
+      - name: Install dependencies
+        run: |
+          if [ ! -f package.json ]; then
+            npm init -y
+            npm install express
+          else
+            npm install
+          fi
+
+  cache-pip-dependencies:
+    name: Cache Python Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          # Built-in caching support
+          cache: 'pip'
+          
+      - name: Create requirements.txt
+        run: |
+          cat > requirements.txt <<EOF
+          requests==2.31.0
+          flask==3.0.0
+          pytest==7.4.3
+          EOF
+          
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        
+  cache-maven-dependencies:
+    name: Cache Maven Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          
+      - name: Display cache info
+        run: echo "Maven dependencies are cached automatically"
+
+  cache-docker-layers:
+    name: Cache Docker Layers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Create Dockerfile
+        run: |
+          cat > Dockerfile <<EOF
+          FROM node:20-alpine
+          WORKDIR /app
+          COPY package*.json ./
+          RUN npm install
+          COPY . .
+          CMD ["node", "index.js"]
+          EOF
+          
+      - name: Build with cache
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: myapp:latest
+          # Cache layers to GitHub Actions cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  cache-multiple-paths:
+    name: Cache Multiple Paths
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Cache multiple directories
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~/.cache
+            node_modules
+            .build-cache
+          key: ${{ runner.os }}-multi-cache-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-multi-cache-
+            
+      - name: Display cache info
+        run: |
+          echo "Multiple paths can be cached with a single cache action"
+          echo "Useful for build outputs, dependencies, and tool caches"
+
+  cache-with-save-always:
+    name: Cache with Save Always
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Restore cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: build-output
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+            
+      - name: Build project
+        run: |
+          mkdir -p build-output
+          echo "Building project..."
+          echo "Build ${{ github.run_number }}" > build-output/build.txt
+          
+      - name: Save cache
+        uses: actions/cache/save@v4
+        if: always()  # Save even if the build fails
+        with:
+          path: build-output
+          key: ${{ runner.os }}-build-${{ github.sha }}
+
+  cache-best-practices:
+    name: Cache Best Practices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Cache best practices
+        run: |
+          echo "=== Caching Best Practices ==="
+          echo ""
+          echo "1. Use specific cache keys:"
+          echo "   - Include file hashes: hashFiles('**/package-lock.json')"
+          echo "   - Include OS: runner.os"
+          echo "   - Include versions: node-16"
+          echo ""
+          echo "2. Use restore-keys for fallback:"
+          echo "   - More specific keys first"
+          echo "   - Less specific as fallback"
+          echo ""
+          echo "3. Cache limits:"
+          echo "   - Max 10GB per repository"
+          echo "   - Least recently used caches evicted first"
+          echo "   - 7-day retention for unused caches"
+          echo ""
+          echo "4. What to cache:"
+          echo "   ✓ Dependencies (npm, pip, maven)"
+          echo "   ✓ Build outputs"
+          echo "   ✓ Tool installations"
+          echo "   ✗ Secrets or sensitive data"
+          echo "   ✗ Large files that rarely change"
+          echo ""
+          echo "5. Cache key strategies:"
+          echo "   - Exact match: \${{ hashFiles('file') }}"
+          echo "   - Prefix match: \${{ runner.os }}-cache-"
+          echo "   - Dynamic: \${{ github.sha }}"
+          
+      - name: Monitor cache usage
+        run: |
+          echo "Monitor cache usage:"
+          echo "- Repository Settings > Actions > Caches"
+          echo "- View size and hit rate"
+          echo "- Manually delete caches if needed"

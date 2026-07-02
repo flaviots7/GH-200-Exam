@@ -1,0 +1,56 @@
+# Domain 1: Author and maintain workflows (40%)
+# Topic: Work with events that trigger workflows - Configure workflows to run for one or more events
+
+name: 01 - Event Triggers - Push and Pull Request
+
+# This workflow demonstrates multiple event triggers
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'releases/**'
+    paths:
+      - 'src/**'
+      - '.github/workflows/01-event-triggers-push.yml'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+  pull_request_target:
+    types:
+      - assigned
+  workflow_dispatch:
+
+jobs:
+  detect-event:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Display event information
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          
+      - name: Check if triggered by push
+        if: github.event_name == 'push'
+        run: |
+          echo "This workflow was triggered by a push event"
+          echo "Pushed to branch: ${{ github.ref_name }}"
+          
+      - name: Check if triggered by pull request
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "This workflow was triggered by a pull request"
+          echo "PR number: ${{ github.event.pull_request.number }}"
+          echo "PR title: ${{ github.event.pull_request.title }}"

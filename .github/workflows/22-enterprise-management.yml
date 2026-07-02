@@ -1,0 +1,519 @@
+# Domain 4: Manage GitHub Actions in the enterprise (15%)
+# Topics: Enterprise management, runners, secrets, policies
+
+name: 22 - Enterprise Management Guide
+
+on:
+  workflow_dispatch:
+
+jobs:
+  enterprise-concepts:
+    name: Enterprise Management Concepts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enterprise Actions management overview
+        run: |
+          cat <<'EOF'
+          === GitHub Actions Enterprise Management ===
+          
+          ## 1. ORGANIZATIONAL USE POLICIES
+          
+          ### Allowed Actions and Reusable Workflows
+          
+          Three policy levels:
+          
+          1. Allow all actions and reusable workflows
+            - Any action can be used
+            - No restrictions
+            - Highest flexibility, lowest security
+          
+          2. Allow actions created by GitHub and select actions
+            - GitHub verified actions only
+            - Plus specific allowed actions
+            - Balanced approach
+          
+          3. Allow only specific actions and reusable workflows
+            - Explicit allowlist
+            - Highest security
+            - Example patterns:
+              - actions/*               (all GitHub actions)
+              - myorg/*                 (all org actions)
+              - myorg/myrepo/*          (specific repo)
+              - myorg/myrepo/.github/*  (specific path)
+          
+          ### Configuration Levels
+          
+          - Enterprise Level: Applies to all organizations
+          - Organization Level: Applies to all repos in org
+          - Repository Level: Specific to one repo
+          
+          Inheritance: Enterprise > Organization > Repository
+          
+          ## 2. SELF-HOSTED RUNNERS
+          
+          ### Scopes
+          
+          1. Repository-level runners
+            - Scoped to single repository
+            - Configured in repo settings
+            - Best for: Single project needs
+          
+          2. Organization-level runners
+            - Shared across org repositories
+            - Configured in org settings
+            - Best for: Team/org infrastructure
+          
+          3. Enterprise-level runners
+            - Shared across all organizations
+            - Configured in enterprise settings
+            - Best for: Shared infrastructure
+          
+          ### Runner Groups
+          
+          Purpose:
+            - Organize runners by purpose/environment
+            - Control access to specific runners
+            - Apply policies to groups
+          
+          Common groups:
+            - Production runners
+            - Development runners
+            - GPU-enabled runners
+            - High-memory runners
+          
+          Access control:
+            - Limit to specific organizations
+            - Limit to specific repositories
+            - Combine with labels for routing
+          
+          ### Runner Configuration
+          
+          Key settings:
+            - Labels (for workflow routing)
+            - Runner group membership
+            - Work folder location
+            - Proxy settings
+            - Environment variables
+          
+          Labels example:
+            - self-hosted
+            - linux / windows / macos
+            - x64 / arm64
+            - gpu
+            - high-memory
+            - production
+          
+          ### IP Allow Lists
+          
+          Effects:
+          
+          GitHub-hosted runners:
+            - When enabled: Can't use GitHub-hosted runners
+            - Must use self-hosted runners
+            - Or disable IP restrictions for Actions
+          
+          Self-hosted runners:
+            - Must have IP in allowlist
+            - Need access to github.com
+            - Need access to api.github.com
+            - May need proxy configuration
+          
+          ## 3. ENCRYPTED SECRETS MANAGEMENT
+          
+          ### Secret Scopes
+          
+          1. Environment secrets
+            - Scoped to deployment environment
+            - Require environment selection
+            - Can have protection rules
+          
+          2. Repository secrets
+            - Available to all workflows in repo
+            - Set in repository settings
+            - Override organization secrets
+          
+          3. Organization secrets
+            - Shared across org repositories
+            - Can limit repository access
+            - Set in organization settings
+          
+          4. Dependabot secrets
+            - Specifically for Dependabot
+            - Separate from Actions secrets
+            - Set in security settings
+          
+          ### Secret Visibility
+          
+          Organization secrets can be:
+            - Available to all repositories
+            - Available to private repositories only
+            - Available to selected repositories
+          
+          ### Best Practices
+          
+          1. Use environment secrets for deployments
+          2. Rotate secrets regularly
+          3. Use least privilege principle
+          4. Don't log secret values
+          5. Use GitHub's secret scanning
+          6. Consider external secret managers (Azure KV, AWS Secrets Manager)
+          
+          ## 4. REUSABLE WORKFLOWS
+          
+          ### Distribution Strategies
+          
+          1. Same repository
+            - Path: ./.github/workflows/reusable.yml
+            - Best for: Single project
+          
+          2. Organization repository
+            - Path: orgname/repo/.github/workflows/reusable.yml@ref
+            - Best for: Organization standards
+          
+          3. Public repository
+            - Path: owner/repo/.github/workflows/reusable.yml@ref
+            - Best for: Open source sharing
+          
+          4. Internal repository (Enterprise)
+            - Available across enterprise
+            - Set repository to internal
+            - Access via same path pattern
+          
+          ### Naming Conventions
+          
+          Recommended structure:
+            workflows/
+              reusable/
+                - deploy-azure.yml
+                - deploy-aws.yml
+                - test-node.yml
+                - security-scan.yml
+              templates/
+                - ci-template.yml
+                - cd-template.yml
+          
+          ### Maintenance
+          
+          1. Version management
+            - Use tags: @v1, @v1.2.3
+            - Use branches: @main, @production
+            - Update documentation
+          
+          2. Breaking changes
+            - Announce in advance
+            - Provide migration guides
+            - Support old versions temporarily
+          
+          3. Testing
+            - Test before releasing
+            - Use example workflows
+            - Validate all inputs/outputs
+          
+          ## 5. MONITORING & TROUBLESHOOTING
+          
+          ### Self-hosted Runner Monitoring
+          
+          Check:
+            - Runner status (online/offline)
+            - Current job execution
+            - System resources (CPU, memory, disk)
+            - Network connectivity
+            - Log files
+          
+          Commands:
+            - List runners: gh api orgs/{org}/actions/runners
+            - Runner details: gh api orgs/{org}/actions/runners/{id}
+            - Remove runner: gh api orgs/{org}/actions/runners/{id} -X DELETE
+          
+          ### Updating Runners
+          
+          Manual update:
+            1. Download latest runner package
+            2. Stop runner service
+            3. Extract new version
+            4. Start runner service
+          
+          Automatic updates:
+            - Enabled by default
+            - Updates between jobs
+            - Checks before each job
+          
+          ### Runner Groups Management
+          
+          Moving runners:
+            1. Go to runner settings
+            2. Select runner
+            3. Change runner group
+            4. Save changes
+          
+          Access control:
+            1. Edit runner group
+            2. Select repository access
+            3. Choose: All / Selected / Private
+            4. Save settings
+          
+          ## 6. COMPLIANCE & SECURITY
+          
+          ### Audit Logs
+          
+          Available events:
+            - Workflow runs
+            - Secret access
+            - Runner changes
+            - Policy changes
+            - Action usage
+          
+          Access:
+            - Enterprise audit log
+            - Organization audit log
+            - Via UI or API
+          
+          ### Security Hardening
+          
+          1. Runner isolation
+            - Use ephemeral runners
+            - Clean between jobs
+            - Dedicated runners for sensitive work
+          
+          2. Network security
+            - Firewall rules
+            - VPN/private networks
+            - Proxy configuration
+          
+          3. Access control
+            - Limit runner groups
+            - Restrict workflow_dispatch
+            - Review permissions regularly
+          
+          4. Code signing
+            - Sign actions
+            - Verify signatures
+            - Use pinned versions
+          EOF
+
+  github-hosted-vs-self-hosted:
+    name: GitHub-hosted vs Self-hosted Comparison
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner comparison
+        run: |
+          cat <<'EOF'
+          === GitHub-hosted vs Self-hosted Runners ===
+          
+          GITHUB-HOSTED RUNNERS
+          
+          ✅ Advantages:
+            - No setup/maintenance required
+            - Auto-scaled
+            - Clean environment each run
+            - Pre-installed software
+            - Included in plan minutes
+            - Multiple OS options
+            - Regular security updates
+          
+          ❌ Disadvantages:
+            - Limited customization
+            - No access to internal resources
+            - Minute limits (depending on plan)
+            - Can't use with IP restrictions
+            - Fixed hardware specs
+            - Internet-facing only
+          
+          📋 Specifications:
+            - 2-core CPU (4-core for macOS)
+            - 7 GB RAM (14 GB for macOS)
+            - 14 GB SSD space
+            - OS: Ubuntu, Windows, macOS
+          
+          💰 Pricing:
+            - Free tier: 2,000 minutes/month
+            - Linux: 1x multiplier
+            - Windows: 2x multiplier
+            - macOS: 10x multiplier
+          
+          SELF-HOSTED RUNNERS
+          
+          ✅ Advantages:
+            - Full customization
+            - Access to internal resources
+            - No minute limits
+            - Any hardware configuration
+            - Install any software
+            - Keep state between jobs
+            - Control security
+          
+          ❌ Disadvantages:
+            - Setup and maintenance required
+            - You manage security updates
+            - You handle scaling
+            - Infrastructure costs
+            - Monitoring responsibility
+            - Potential security risks
+          
+          📋 Requirements:
+            - OS: Linux, Windows, macOS
+            - Architecture: x64, ARM64, ARM32
+            - Network: Access to GitHub
+            - Permissions: Admin rights
+          
+          💰 Costs:
+            - No GitHub charges
+            - Pay for infrastructure
+            - Maintenance time
+            - Scaling costs
+          
+          SELECTION GUIDE
+          
+          Use GitHub-hosted when:
+            ✓ Standard CI/CD workflows
+            ✓ Public repositories
+            ✓ Don't need custom environment
+            ✓ Don't need internal access
+            ✓ Want zero maintenance
+            ✓ Within minute limits
+          
+          Use Self-hosted when:
+            ✓ Need custom software/hardware
+            ✓ Access to internal resources
+            ✓ High usage volumes
+            ✓ Specific compliance needs
+            ✓ Cost optimization at scale
+            ✓ Persistent caching needs
+            ✓ Enterprise environments
+          
+          SECURITY CONSIDERATIONS
+          
+          GitHub-hosted:
+            ✓ Isolated environments
+            ✓ Regular updates
+            ✓ No persistent state
+            ✓ Safe for public repos
+          
+          Self-hosted:
+            ⚠️ Never use for public repos
+            ⚠️ Implement security hardening
+            ⚠️ Regular security updates
+            ⚠️ Network isolation
+            ⚠️ Access controls
+            ⚠️ Audit logging
+          EOF
+
+  workflow-templates-guide:
+    name: Workflow Templates Guide
+    runs-on: ubuntu-latest
+    steps:
+      - name: Templates information
+        run: |
+          cat <<'EOF'
+          === Organization Workflow Templates ===
+          
+          ## PURPOSE
+          
+          Workflow templates help organizations:
+            - Standardize CI/CD across repos
+            - Share best practices
+            - Enforce security policies
+            - Reduce setup time
+            - Maintain consistency
+          
+          ## STRUCTURE
+          
+          Location: .github/workflow-templates/
+          
+          Required files:
+            1. template-name.yml (the workflow)
+            2. template-name.properties.json (metadata)
+          
+          Optional:
+            3. template-name.svg (icon)
+          
+          ## PROPERTIES FILE
+          
+          {
+            "name": "Display name",
+            "description": "What this template does",
+            "iconName": "github-icon-name",
+            "categories": ["CI", "Deployment"],
+            "filePatterns": ["package.json", "*.py"]
+          }
+          
+          Available categories:
+            - Continuous Integration
+            - Deployment
+            - Testing
+            - Code Scanning
+            - Automation
+          
+          ## TEMPLATE VARIABLES
+          
+          Use placeholder variables:
+            $default-branch  - Replaced with repo default branch
+            $protected-branches - Protected branches
+            $cron-daily - Cron for daily runs
+          
+          ## DISTRIBUTION
+          
+          1. Organization templates
+            - Create .github repository in org
+            - Add templates to workflow-templates/
+            - Available in "Actions" tab for all repos
+          
+          2. Repository visibility
+            - .github repo can be public or private
+            - Private: Only org members see templates
+            - Public: Anyone can view
+          
+          3. Enterprise templates
+            - Share across organizations
+            - Use internal repositories
+            - Distribute via reusable workflows
+          
+          ## BEST PRACTICES
+          
+          1. Keep templates simple
+            - Provide sensible defaults
+            - Allow customization
+            - Document clearly
+          
+          2. Use inputs for flexibility
+            - workflow_dispatch inputs
+            - Environment variables
+            - Secrets documentation
+          
+          3. Include documentation
+            - Inline comments
+            - README in template
+            - Link to detailed docs
+          
+          4. Version management
+            - Update templates carefully
+            - Communicate changes
+            - Backward compatibility
+          
+          5. Security
+            - Follow security best practices
+            - Include required scans
+            - Document secret requirements
+          
+          ## EXAMPLE USE CASES
+          
+          1. Standard CI template
+            - Build, test, lint
+            - Code coverage
+            - Security scanning
+          
+          2. Deployment template
+            - Environment-specific deploys
+            - Approval gates
+            - Rollback procedures
+          
+          3. Security scanning template
+            - CodeQL analysis
+            - Dependency scanning
+            - Container scanning
+          
+          4. Release automation
+            - Semantic versioning
+            - Changelog generation
+            - GitHub release creation
+          EOF

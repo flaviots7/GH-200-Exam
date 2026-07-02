@@ -1,0 +1,20 @@
+{
+  "name": "javascript-greeting-action",
+  "version": "1.0.0",
+  "description": "Sample JavaScript action for GitHub Actions GH-200 exam",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "github",
+    "actions",
+    "javascript"
+  ],
+  "author": "GH-200 Student",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0"
+  }
+}

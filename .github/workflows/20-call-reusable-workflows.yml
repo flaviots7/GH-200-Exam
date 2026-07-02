@@ -1,0 +1,164 @@
+# Domain 2: Consume workflows (20%)
+# Topic: Calling reusable workflows
+
+name: 20 - Call Reusable Workflows
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # Call the reusable workflow for development
+  deploy-dev:
+    name: Deploy to Development
+    uses: ./.github/workflows/19-reusable-workflow.yml
+    with:
+      environment: development
+      version: v1.0.0-dev
+      dry-run: false
+    secrets:
+      deploy-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Call the reusable workflow for staging
+  deploy-staging:
+    name: Deploy to Staging
+    needs: deploy-dev
+    uses: ./.github/workflows/19-reusable-workflow.yml
+    with:
+      environment: staging
+      version: v1.0.0-rc1
+      dry-run: false
+    secrets:
+      deploy-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Call the reusable workflow for production (dry run)
+  deploy-production-dry-run:
+    name: Production Deployment (Dry Run)
+    needs: deploy-staging
+    uses: ./.github/workflows/19-reusable-workflow.yml
+    with:
+      environment: production
+      version: v1.0.0
+      dry-run: true
+    secrets:
+      deploy-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Use outputs from reusable workflow
+  verify-deployments:
+    name: Verify All Deployments
+    needs: [deploy-dev, deploy-staging, deploy-production-dry-run]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display deployment results
+        run: |
+          echo "=== Deployment Results ==="
+          echo ""
+          echo "Development:"
+          echo "  URL: ${{ needs.deploy-dev.outputs.deployment-url }}"
+          echo "  Status: ${{ needs.deploy-dev.outputs.deployment-status }}"
+          echo ""
+          echo "Staging:"
+          echo "  URL: ${{ needs.deploy-staging.outputs.deployment-url }}"
+          echo "  Status: ${{ needs.deploy-staging.outputs.deployment-status }}"
+          echo ""
+          echo "Production (Dry Run):"
+          echo "  URL: ${{ needs.deploy-production-dry-run.outputs.deployment-url }}"
+          echo "  Status: ${{ needs.deploy-production-dry-run.outputs.deployment-status }}"
+
+  call-external-reusable-workflow:
+    name: Call External Reusable Workflow (Example)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Example of calling external reusable workflows
+        run: |
+          echo "=== Calling External Reusable Workflows ==="
+          echo ""
+          echo "Syntax:"
+          echo "  uses: owner/repo/.github/workflows/workflow.yml@ref"
+          echo ""
+          echo "Examples:"
+          echo ""
+          echo "1. From another repository:"
+          echo "   uses: actions/reusable-workflows/.github/workflows/deploy.yml@v1"
+          echo ""
+          echo "2. With specific tag:"
+          echo "   uses: myorg/workflows/.github/workflows/ci.yml@v2.1.0"
+          echo ""
+          echo "3. With branch:"
+          echo "   uses: myorg/workflows/.github/workflows/cd.yml@main"
+          echo ""
+          echo "4. With commit SHA:"
+          echo "   uses: myorg/workflows/.github/workflows/test.yml@abc123"
+
+  reusable-workflow-best-practices:
+    name: Reusable Workflow Best Practices
+    runs-on: ubuntu-latest
+    steps:
+      - name: Best practices guide
+        run: |
+          cat <<'EOF'
+          === Reusable Workflow Best Practices ===
+          
+          1. Design Principles:
+             - Keep workflows focused and single-purpose
+             - Use clear, descriptive names
+             - Document inputs, outputs, and secrets
+             - Provide sensible defaults
+          
+          2. Inputs:
+             - Mark required inputs clearly
+             - Use type validation (string, number, boolean)
+             - Provide default values where appropriate
+             - Document expected format and constraints
+          
+          3. Outputs:
+             - Return meaningful data
+             - Use consistent naming
+             - Document output format
+             - Consider downstream consumers
+          
+          4. Secrets:
+             - Only require necessary secrets
+             - Document secret requirements
+             - Use inherit for passing all secrets
+             - Consider using GITHUB_TOKEN when possible
+          
+          5. Versioning:
+             - Tag reusable workflows with versions
+             - Use semantic versioning
+             - Maintain backward compatibility
+             - Document breaking changes
+          
+          6. Location:
+             - Store in .github/workflows/
+             - Consider separate repository for shared workflows
+             - Use clear file naming convention
+             - Organize by purpose or team
+          
+          7. Testing:
+             - Test reusable workflows independently
+             - Create example caller workflows
+             - Test with various input combinations
+             - Validate error handling
+          
+          8. Security:
+             - Limit workflow permissions
+             - Validate inputs
+             - Use specific action versions
+             - Review dependencies regularly
+          
+          9. Limitations:
+             - Max 4 levels of nesting
+             - Can't call another reusable workflow from a reusable workflow
+             - Matrix strategies must be in caller workflow
+             - Environment variables don't pass automatically
+          
+          10. When to use:
+             ✓ Repeated deployment patterns
+             ✓ Standardized CI/CD across repos
+             ✓ Enforced security scanning
+             ✓ Common build processes
+             ✗ Simple, one-off workflows
+             ✗ Workflows with heavy customization
+          EOF

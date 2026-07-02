@@ -1,0 +1,32 @@
+# Ignore node_modules
+node_modules/
+
+# Ignore build outputs
+dist/
+build/
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore test outputs
+coverage/
+*.test.js.snap
+
+# Keep workflow files
+!.github/
+
+# Ignore deployment logs
+deployment-*.log
+analysis-report.txt
