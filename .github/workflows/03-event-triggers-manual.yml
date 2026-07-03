@@ -15,6 +15,7 @@ on:
           - development
           - staging
           - production
+          - test
         default: 'development'
       log-level:
         description: 'Log level'
